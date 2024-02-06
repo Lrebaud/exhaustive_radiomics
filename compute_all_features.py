@@ -392,7 +392,7 @@ def compute_lesion_features(pt_itk, ct_itk, lesion_itk, voxel_size):
                 'Y_size': pt.shape[1],
                 'Z_size': pt.shape[2],
             }
-            row['nb_roi'] = nb_roi
+            row['n_roi'] = nb_roi
             row['mask_type'] = mask_type
             row['roi_id'] = idx
         
@@ -489,6 +489,41 @@ def compute_organ_features(pt_itk, ct_itk, lesion_itk, organ_itk, voxel_size):
     return row
 
 
+
+def compute_surrogate_biomarkers(df, lesion_features):
+    df['Low ratio of volume of subcutaneous fat / volume of muscle'] = df['vol_fat / vol_muscle']
+    df['High number of lesions'] = df['n_lesions']
+    df['High number of invaded organs'] = df['nb_organ_with_tumor']
+    df['High Tumor Energy from the PET image'] = df['oneroi_PT_firstorder_Energy']
+    df['Large liver'] = df['liver_shape_MajorAxisLength']
+    df['Presence of small lesions'] = df['lesion_shape_MeshVolume_mini']
+    df['Presence of homogeneous density lesion'] = df['lesion_CT_firstorder_Kurtosis_maxi']
+    df['Presence of lesion in a region of homogeneous density'] = df['shell_CT_gldm_DependenceEntropy_mini']
+    df['High tumoral activity in the pancreas'] = df['pancreas_PT_firstorder_Energy']*df['pancreas_gotTumor']
+    df['Low elongation of the pancreas'] = -df['pancreas_shape_Elongation']
+    df['High roundness of tumor burden'] = -df['oneroi_shape_Flatness']
+    df['Splenic involvement'] = df['spleen_gotTumor']
+    df['Trachea involvement'] = df['trachea_gotTumor']
+    df['Lungs involvement'] = float((df['lung_right_gotTumor']==1) | (df['lung_left_gotTumor']==1))
+    df['Activity of liver involvement'] = df['liver_gotTumor'] * df['liver_PT_firstorder_Maximum']    
+    df['Large lungs'] = df['lung_right_shape_MeshVolume']+df['lung_left_shape_MeshVolume']   
+    df['High bronchus density'] = df['lung_right_CT_glcm_ClusterProminence']
+    df['No air in stomach'] = df['stomach_CT_firstorder_RobustMeanAbsoluteDeviation']
+    df['Right kidney involvement'] = df['kidney_right_gotTumor']
+    df['Esophagus involvement'] = df['esophagus_gotTumor']
+    df['Colon involvement'] = df['colon_gotTumor']
+    df['Lesions near the bladder'] = df['urinary_bladder_gotTumor']
+
+    n_occult = ((lesion_features['lesion_shape_MeshVolume'] < 20000) & (lesion_features['lesion_PT_firstorder_Maximum'] < 5)).sum()
+    if n_occult > 0:
+        df['Presence of occulte lesion'] = 1
+    else:
+        df['Presence of occulte lesion'] = 0
+
+    return df
+    
+
+
 def compute_biomarkers(pt_path,
                        ct_path,
                        lesion_segmentation_path,
@@ -543,6 +578,14 @@ def compute_biomarkers(pt_path,
         except:
             pass
         all_features[k] = float(all_features[k])
+
+    shell_features = lesion_features[lesion_features['mask_type']=='shell'].add_prefix('shell_').drop(columns=['shell_mask_type'])
+    lesion_features = lesion_features[lesion_features['mask_type']=='lesion'].add_prefix('lesion_').drop(columns=['lesion_mask_type'])
+    lesion_features = pd.concat([lesion_features, shell_features, one_roi_lesions, one_roi_shell], axis=1)
+
+    all_features = compute_surrogate_biomarkers(all_features, lesion_features) 
+
+    
     return all_features
 
 
@@ -565,6 +608,7 @@ if __name__ == '__main__':
                              total_segmentator_segmentation_path,
                              moose_muscle_fat_segmentation,
                              voxel_size)
+
     
     with open(output_path, "w") as outfile: 
         json.dump(res, outfile)
