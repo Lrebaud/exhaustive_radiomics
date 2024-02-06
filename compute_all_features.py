@@ -519,6 +519,8 @@ def compute_surrogate_biomarkers(df, lesion_features):
     else:
         df['Presence of occulte lesion'] = 0
 
+    df['Dmax'] = df['oneroi_shape_Maximum3DDiameter']
+    
     return df
     
 
