@@ -502,7 +502,6 @@ def compute_surrogate_biomarkers(df, lesion_features):
     df['High tumoral activity in the pancreas'] = df['pancreas_PT_firstorder_Energy']*df['pancreas_gotTumor']
     df['Low elongation of the pancreas'] = -df['pancreas_shape_Elongation']
     df['High roundness of tumor burden'] = -df['oneroi_shape_Flatness']
-    df['Splenic involvement'] = df['spleen_gotTumor']
     df['Trachea involvement'] = df['trachea_gotTumor']
     df['Lungs involvement'] = float((df['lung_right_gotTumor']==1) | (df['lung_left_gotTumor']==1))
     df['Activity of liver involvement'] = df['liver_gotTumor'] * df['liver_PT_firstorder_Maximum']    
