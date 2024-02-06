@@ -1,0 +1,30 @@
+# See https://pyradiomics.readthedocs.io/en/latest/customization.html for all the details
+
+imageType:
+    Original: {}
+
+featureClass:
+    shape:
+
+
+setting:
+    #Normalization
+    
+    #Resampling
+    #resampledPixelSpacing: [None]
+    #interpolator: 'sitkBSpline'
+    #padDistance: 5
+    
+    #Resegmentation
+    #Segmented voxels outside the resegmentRange are removed from the mask prior to feature calculation. When the value is 
+    #None(default), no resegmentation is performed. When resegmentShape is False, only first order and texture classes are
+    #calculated using the resegmented mask.
+    resegmentRange: [0 , 40]
+    resegmentMode: 'absolute'
+    resegmentShape: False
+
+    #Image discretization
+    binWidth: 0.3
+
+    #Miscellaneous
+    additionalInfo: True
